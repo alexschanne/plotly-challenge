@@ -27,3 +27,49 @@ function buildMeta(sample) {
 
     });
 };
+
+//Second, a function to build some charts!
+function charting(sample) {
+    var chartURL = "/samples/" + sample;
+    d3.json(chartURL).then(data) => {
+        //Build bubbly chart
+        var trace1 = {
+            x: data.otu_ids,
+            y: data.sample_values,
+            mode: 'markers',
+            text: data.otu_labels,
+            marker: {
+                color: data.otu_ids,
+                size: data.sample_values,
+                colorscale: "Earth"
+            }
+        };
+        var trace1 = [trace1];
+        var layout = {
+            title: "OTU ID",
+            showlegend: false,
+            height: 600,
+            width: 1500
+        };
+        Plotly.newPlot("bubble", trace1, layout);
+};
+
+function init() {
+    //reference dropdown select element
+    var selector = d3.select("#selDataset");
+
+    //use list of names to populate options
+    d3.json("/names").then((sampleNames) => {
+        sampleNames.forEach((sample) => {
+            selector
+                .append("option")
+                .text(sample)
+                .property("value", sample);
+        });
+
+        const firstSample = sampleNames[0];
+        charting(firstSample);
+        buildMeta(firstSample);
+        console.log(firstSample)
+    });
+}
