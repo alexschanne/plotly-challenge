@@ -73,3 +73,13 @@ function init() {
         console.log(firstSample)
     });
 }
+
+function optionChanged(newSample) {
+    //getting new data for a new selection
+    charting(newSample);
+    buildMeta(newSample);
+
+}
+
+//initialize dashboard
+init();
