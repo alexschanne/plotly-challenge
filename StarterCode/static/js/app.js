@@ -74,10 +74,10 @@ function init() {
     });
 }
 
-function optionChanged(newSample) {
+function optionChanged(newData) {
     //getting new data for a new selection
-    charting(newSample);
-    buildMeta(newSample);
+    charting(newData);
+    buildMeta(newData);
 
 }
 
