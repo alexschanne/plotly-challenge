@@ -1,28 +1,28 @@
 #imports
 import os
-import pandas as import pd
+import pandas as pd
 import numpy as np
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from flask import Flask, jsonify, render_template
-from flask_sqlalchemy import sqlalchemy
+from flask_sqlalchemy import SQLAlchemy
 
 #initiate app
 app = Flask(__name__)
 
 ###### Database Setup#######
-app.config["SQLACHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL', '') or "sqlite:///db/bellybutton.sqlite"
+app.config["SQLACHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL', '') 
 db = SQLAlchemy(app)
 
 #existing database into new model
-Base = automap_base()
-Base.prepare(db.engine, reflect = True)
+base = automap_base()
+base.prepare(db.engine, reflect = True)
 
 #save references to each table
 Samples_metadata = base.classes.Samples_metadata
-Samples = Base.classes.samples
+Samples = base.classes.samples
 
 @app.route("/")
 def index():
@@ -68,7 +68,8 @@ def Samples_metadata(sample):
     return jsonify(sample_rows)
 
 @app.route("/samples/<samples>")
-    """Return 'otu_ids', 'otu_labels', and 'sample_values'."""
+def samples(sample):
+    """Return otu_ids, otu_labels, and sample_values."""
     stmt - db.session.query(Samples).statement
     df = pd.read_sql_query(stmt, db.session.bind)
 
