@@ -1,56 +1,61 @@
 //giving the dropdown menu functionality
 function dropDownMenu() {
-    d3.json("samples.json").then(data => {
-        var filterOpts = ["All"];
-        filterOpts = filterOpts.concat(data.names);
-        console.log(filterOpts);
+    var menu = d3.select("#selDataset");
 
-        d3.select("#selDataset")
-            .selectAll("option")
-            .data(filterOpts)
-            .enter()
+    d3.json("samples.json").then((data) => {
+        var sampleName = data.names;
+        sampleName.forEach((name) => {
+            menu
             .append("option")
-            .text(d => d);
+            .text(name)
+            .property("value", name);                
+        });
 
-            //event
-            d3.select("#selDataset").on("change", optionChanged);
+        //set default
+        const defaultSample = sampleName[0];
+        demoTable(defaultSample);
+        charting(defaultSample);
     });
 }
 
-function optionChanged(event) {
-    //selector as event to get selected event
-    var filterVal = d3.select("#selDataset").property('value');
-    console.log(filterVal);
+function optionChanged(sampleName) {
+    // //menu as event to get selected event
+    // var filterVal = d3.select("#selDataset").property('value');
+    // console.log(filterVal);
     //refresh charts with value
-    demoTable(filterVal)
-    charting(filterVal);
+    demoTable(sampleName)
+    charting(sampleName);
 }
 
 function demoTable(sampleName) {
     d3.json("samples.json").then((data) => {
-        var tabInfo = data.metadata
-        var filtered = tabInfo.filter(x => x.id == sampleName)
-        console.log(filtered[0])
+        var tabInfo = data.metadata;
+        console.log(tabInfo)
+        var filtered = tabInfo.filter(x => x.id == sampleName)[0];
+        console.log(filtered)
         var tablegraphic = d3.select("#sample-metadata");
         tablegraphic.html("")
-        Object.entries(filtered[0]).forEach(([key,value]) => {
+        // Object.entries(filtered).forEach((i) => {
+        //     tablegraphic.append('h5').text(i[0].toUpperCase() + ': ' +  i[1] + '\n');
+        // });
+        Object.entries(filtered).forEach(([key,value]) => {
             var row = tablegraphic.append('tr');
             var cell = tablegraphic.append('td');
-            cell.text(key)
+            cell.text(key.toUpperCase() + `: ${value}`)
             var cell = row.append('td');
-            cell.text(`: ${value}`)
+            // cell.text(`: ${value}`)
         });
     });
 }
 
 function charting(sampleName) {
-    d3.json("sample.json").then((data) => {
-        var tabInfo = data.samples
-        var filterd = tabInfo.filter(x => x.id == sampleName)
-        console.log(filterd)
-        var otu_ids = filterd[0].otu_ids;
-        var otu_labels = filterd[0].otu_labels
-        var sample_values = filterd[0].sample_values;
+    d3.json("samples.json").then((data) => {
+        var tabInfo = data.samples;
+        var filtered = tabInfo.filter(x => x.id.toString() === sampleName)[0];
+        console.log(filtered)
+        var otu_ids = filtered.otu_ids;
+        var otu_labels = filtered.otu_labels
+        var sample_values = filtered.sample_values;
         
         //bar chart
         var trace1 = [{
@@ -62,8 +67,8 @@ function charting(sampleName) {
 
         var layout1 = {
             title: "Top 10 OTU",
-            xaxis: { title: "otu_labels" },
-            yaxis: { title: "otu_ids" }
+            xaxis: { title: "OTU (Operational Taxonomic Unit) Labels" },
+            yaxis: { title: "OTU (Operational Taxonomic Unit) IDs" }
         };
         Plotly.newPlot("bar", trace1, layout1);
 
@@ -72,18 +77,38 @@ function charting(sampleName) {
             x: otu_ids,
             y: sample_values,
             mode: 'markers',
+            text: otu_labels,
             markers: {
-                color: ['rgb(93, 164, 214)','rgb(255, 144, 14)','rgb(44, 160, 101)','rgb(255, 65, 54)'],
+                colorscale: [
+                    ['0.0', 'rgb(40, 190, 220)'],
+                    ['0.1', 'rgb(51, 175, 221)'],
+                    ['0.2', 'rgb(62, 160, 222)'],
+                    ['0.3', 'rgb(73, 145, 223)'],
+                    ['0.4', 'rgb(84, 130, 224)'],
+                    ['0.5', 'rgb(95, 115, 225)'],
+                    ['0.6', 'rgb(106, 100, 226)'],
+                    ['0.7', 'rgb(117, 85, 227)'],
+                    ['0.8', 'rgb(128, 70, 228)'],
+                    ['0.9', 'rgb(139, 55, 229)'],
+                    ['1.0', 'rgb(150, 40, 230)']
+                  ],
                 opacity: [1, 0.8, 0.6, 0.4],
-                size: [40, 60, 80, 100]
+                size: sample_values
             }
         }];
 
         var layout2 = {
-            title: 'OTU Samples from All Subjects',
+            title: 'Cultures per Sample',
+            margin: { t: 25, r: 25, l: 25, b: 25 },
             showlegend: false,
-            height: 600,
-            width: 600
+            hovermode: 'closest',
+            xaxis: {
+                title:"OTU (Operational Taxonomic Unit) ID " +sampleName
+            },
+             yaxis: {
+                range: [0, Math.max.apply(null, sample_values) * 4]
+            },
+            margin: {t:50}
         };
         Plotly.newPlot("bubble", trace2, layout2);
     });
