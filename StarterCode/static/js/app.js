@@ -58,27 +58,35 @@ function charting(sampleName) {
         var sample_values = filtered.sample_values;
         
         //bar chart
-        var trace1 = [{
+        var trace1 = {
             type: "bar",
             orientation: "h",
             x: sample_values.slice(1,10),
             y: otu_ids.slice(1,10).map(x => `OTU ${x}`),
-        }];
+        };
+
+        var data1 = [trace1];
 
         var layout1 = {
             title: "Top 10 OTU",
             xaxis: { title: "OTU (Operational Taxonomic Unit) Labels" },
             yaxis: { title: "OTU (Operational Taxonomic Unit) IDs" }
         };
-        Plotly.newPlot("bar", trace1, layout1);
+        Plotly.newPlot("bar", data1, layout1);
 
-
-        var trace2 = [{
+        var desired_maximum_marker_size = 40;
+        var size = sample_values
+        var trace2 = {
             x: otu_ids,
             y: sample_values,
             mode: 'markers',
             text: otu_labels,
             markers: {
+                size: size,
+                //set 'sizeref' to an 'ideal' size given by the formula sizeref = 2. * max(array_of_size_values) / (desired_maximum_marker_size ** 2)
+                sizeref: 2.0 * Math.max(...size) / (desired_maximum_marker_size**2),
+                sizemode: 'area',                
+                color: otu_ids,
                 colorscale: [
                     ['0.0', 'rgb(40, 190, 220)'],
                     ['0.1', 'rgb(51, 175, 221)'],
@@ -91,11 +99,10 @@ function charting(sampleName) {
                     ['0.8', 'rgb(128, 70, 228)'],
                     ['0.9', 'rgb(139, 55, 229)'],
                     ['1.0', 'rgb(150, 40, 230)']
-                  ],
-                opacity: [1, 0.8, 0.6, 0.4],
-                size: sample_values
-            }
-        }];
+                  ]            }
+        };
+
+        var data2 = [trace2];
 
         var layout2 = {
             title: 'Cultures per Sample',
@@ -103,14 +110,14 @@ function charting(sampleName) {
             showlegend: false,
             hovermode: 'closest',
             xaxis: {
-                title:"OTU (Operational Taxonomic Unit) ID " +sampleName
+                title:"OTU (Operational Taxonomic Unit) ID  from Sample " +sampleName
             },
              yaxis: {
                 range: [0, Math.max.apply(null, sample_values) * 4]
             },
             margin: {t:50}
         };
-        Plotly.newPlot("bubble", trace2, layout2);
+        Plotly.newPlot("bubble", data2, layout2);
     });
 }
 
