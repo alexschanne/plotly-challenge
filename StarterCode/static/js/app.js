@@ -1,85 +1,95 @@
-//First, building Metadata function
-function buildMeta(sample) {
-    //using d3.json to connect to the sample
-    var dataurl = "/metadata/" + sample
-    //d3 to select panel '#sample-metadata'
-    var paneldata = d3.select("#sample-metadata");
-    //use .html("") to clear exisiting
-    paneldata.hmtl("");
-    //object.entries to add key/value pair
-    //inside loop, need d3 to append new tags for each pair
-    d3.json(dataurl).then(function(data){
-        Object.entries(data).forEach(([key,value]) => {
-            paneldata.append("h5").text(`${key}: ${value}`);
-        });
-    
-        var data = [domain: {x: [0,1], y: [0,1]}, value: data.WFREQ,
-        title: {text: "Belly Button Washing Frequency of Scrubbing Per Week", font: {size: 14}},
-        type: "indicator", mode: "gauge+number+delta",
-        delta: {reference: 9, increasing: {color: "green"}},
-        gauge:
-            {axis: {range: [0,10]}, steps: [{range: [0,5], color: "lightgray"},
-            {range: [5,8], color: "gray"}], threshold: {line: {color: "red", width: 4},
-            thickness: 0.75, value: 9}}}];
+//giving the dropdown menu functionality
+function dropDownMenu() {
+    d3.json("samples.json").then(data => {
+        var filterOpts = ["All"];
+        filterOpts = filterOpts.concat(data.names);
+        console.log(filterOpts);
 
-        var gaugeLayout = {width: 400, height: 500, margin: {t:0, b: 0}};
-        Plotly.newPlot("gauge", data, gaugeLayout);
+        d3.select("#selDataset")
+            .selectAll("option")
+            .data(filterOpts)
+            .enter()
+            .append("option")
+            .text(d => d);
 
+            //event
+            d3.select("#selDataset").on("change", optionChanged);
     });
-};
+}
 
-//Second, a function to build some charts!
-function charting(sample) {
-    var chartURL = "/samples/" + sample;
-    d3.json(chartURL).then(data) => {
-        //Build bubbly chart
-        var trace1 = {
-            x: data.otu_ids,
-            y: data.sample_values,
-            mode: 'markers',
-            text: data.otu_labels,
-            marker: {
-                color: data.otu_ids,
-                size: data.sample_values,
-                colorscale: "Earth"
-            }
+function optionChanged(event) {
+    //selector as event to get selected event
+    var filterVal = d3.select("#selDataset").property('value');
+    console.log(filterVal);
+    //refresh charts with value
+    demoTable(filterVal)
+    charting(filterVal);
+}
+
+function demoTable(sampleName) {
+    d3.json("samples.json").then((data) => {
+        var tabInfo = data.metadata
+        var filtered = tabInfo.filter(x => x.id == sampleName)
+        console.log(filtered[0])
+        var tablegraphic = d3.select("#sample-metadata");
+        tablegraphic.html("")
+        Object.entries(filtered[0]).forEach(([key,value]) => {
+            var row = tablegraphic.append('tr');
+            var cell = tablegraphic.append('td');
+            cell.text(key)
+            var cell = row.append('td');
+            cell.text(`: ${value}`)
+        });
+    });
+}
+
+function charting(sampleName) {
+    d3.json("sample.json").then((data) => {
+        var tabInfo = data.samples
+        var filterd = tabInfo.filter(x => x.id == sampleName)
+        console.log(filterd)
+        var otu_ids = filterd[0].otu_ids;
+        var otu_labels = filterd[0].otu_labels
+        var sample_values = filterd[0].sample_values;
+        
+        //bar chart
+        var trace1 = [{
+            type: "bar",
+            orientation: "h",
+            x: sample_values.slice(1,10),
+            y: otu_ids.slice(1,10).map(x => `OTU ${x}`),
+        }];
+
+        var layout1 = {
+            title: "Top 10 OTU",
+            xaxis: { title: "otu_labels" },
+            yaxis: { title: "otu_ids" }
         };
-        var trace1 = [trace1];
-        var layout = {
-            title: "OTU ID",
+        Plotly.newPlot("bar", trace1, layout1);
+
+
+        var trace2 = [{
+            x: otu_ids,
+            y: sample_values,
+            mode: 'markers',
+            markers: {
+                color: ['rgb(93, 164, 214)','rgb(255, 144, 14)','rgb(44, 160, 101)','rgb(255, 65, 54)'],
+                opacity: [1, 0.8, 0.6, 0.4],
+                size: [40, 60, 80, 100]
+            }
+        }];
+
+        var layout2 = {
+            title: 'OTU Samples from All Subjects',
             showlegend: false,
             height: 600,
-            width: 1500
+            width: 600
         };
-        Plotly.newPlot("bubble", trace1, layout);
-};
-
-function init() {
-    //reference dropdown select element
-    var selector = d3.select("#selDataset");
-
-    //use list of names to populate options
-    d3.json("/names").then((sampleNames) => {
-        sampleNames.forEach((sample) => {
-            selector
-                .append("option")
-                .text(sample)
-                .property("value", sample);
-        });
-
-        const firstSample = sampleNames[0];
-        charting(firstSample);
-        buildMeta(firstSample);
-        console.log(firstSample)
+        Plotly.newPlot("bubble", trace2, layout2);
     });
 }
 
-function optionChanged(newData) {
-    //getting new data for a new selection
-    charting(newData);
-    buildMeta(newData);
 
-}
 
-//initialize dashboard
-init();
+//initialize Dashboard
+dropDownMenu();
